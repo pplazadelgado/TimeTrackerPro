@@ -16,6 +16,12 @@
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public SectionStatus Status { get; set; } = SectionStatus.Pending;
 
+        /// <summary>
+        /// Indica si el cronómetro está activo en esta sección.
+        /// No se guarda en BD, es solo estado en memoria.
+        /// </summary>
+        public bool IsTimerActive { get; set; }
+
         public List<Section> SubSections { get; set; } = new();
         public List<WorkSession> WorkSessions {  get; set; } = new();
 

@@ -116,21 +116,20 @@
             </Border>
 
             <!-- ===== COLUMNA DERECHA: formulario o bienvenida ===== -->
-            <!-- MainWindow.xaml — reemplaza el Grid Grid.Column="1" completo -->
             <Grid Grid.Column="1" Background="White">
 
                 <!-- Detalle del proyecto seleccionado -->
                 <views:ProjectDetailView
-        DataContext="{Binding DetailViewModel}"
-        Visibility="{Binding DetailViewModel.HasProject,
-            Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    DataContext="{Binding DetailViewModel}"
+                    Visibility="{Binding HasProject,
+                        Converter={StaticResource BoolToVisibilityConverter}}"/>    
 
                 <!-- Formulario nuevo proyecto -->
                 <Border Padding="40"
                         Visibility="{Binding IsFormVisible,
                             Converter={StaticResource BoolToVisibilityConverter}}">
                     <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled">
+                          HorizontalScrollBarVisibility="Disabled">
                         <StackPanel MaxWidth="480" HorizontalAlignment="Left">
                             <TextBlock Text="Nuevo proyecto"
                                    FontSize="22" FontWeight="Light"

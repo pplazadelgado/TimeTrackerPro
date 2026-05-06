@@ -1,6 +1,8 @@
 ﻿using System.Windows;
 using TimeTrackerPro.Infrastructure;
 using TimeTrackerPro.Repositories;
+using TimeTrackerPro.Services;
+using QuestPDF.Infrastructure;
 
 namespace TimeTrackerPro
 {
@@ -17,9 +19,13 @@ namespace TimeTrackerPro
         public static ISectionRepository Sections { get; private set; } = null;
         public static IWorkSessionRepository WorkSessions {  get; private set; } = null!;
         public static TimerService Timer {  get; private set; } = null!;
+        public static IExpenseRepository Expenses { get; private set; } = null!;
+        public static ReportService Reports { get; private set; } = null!;
 
         protected override async void OnStartup(StartupEventArgs e)
         {
+            QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
             base.OnStartup(e);
 
             try
@@ -32,6 +38,8 @@ namespace TimeTrackerPro
                 WorkSessions = new WorkSessionRepository(Database);
                 Timer = new TimerService (WorkSessions);
                 await Timer.RestoreActiveSessionAsync();
+                Expenses = new ExpenseRepository(Database);
+                Reports = new ReportService();
             }
             catch (Exception ex)
             {

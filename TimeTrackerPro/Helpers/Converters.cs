@@ -96,4 +96,17 @@ namespace TimeTrackerPro.Helpers
             object parameter, System.Globalization.CultureInfo culture)
                 => throw new NotImplementedException();
     }
+
+    /// <summary>
+    /// Convierte un entero a Visibility: Visible si count > 0, Collapsed si es 0.
+    /// Usado para mostrar el historial de sesiones solo cuando hay sesiones.
+    /// </summary>
+    public class CountToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+            => value is int count && count > 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
 }

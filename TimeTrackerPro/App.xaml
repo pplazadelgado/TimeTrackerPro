@@ -10,5 +10,6 @@
         <helpers:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
         <helpers:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter"/>
         <helpers:NotEqualToVisibilityConverter x:Key="NotEqualToVisibilityConverter"/>
+        <helpers:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
     </Application.Resources>
 </Application>

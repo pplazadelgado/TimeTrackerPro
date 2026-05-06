@@ -1,6 +1,9 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Formats.Asn1;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using TimeTrackerPro.Helpers;
 using TimeTrackerPro.Models;
 
@@ -25,6 +28,12 @@ namespace TimeTrackerPro.ViewModels
         private string _timerDisplay = "00:00:00";
         private bool _hasActiveTimer;
         private int? _activeTimerSectionId;
+        private ObservableCollection<Expense> _expenses = new();
+        private bool _isAddingExpense;
+        private string _newExpenseDescription = string.Empty;
+        private double _newExpenseAmount;
+        private ExpenseCategory _newExpenseCategory = ExpenseCategory.Other;
+        private string _newExpenseReference = string.Empty;
 
         // edición proyecto
         private bool _isEditingProject;
@@ -236,11 +245,86 @@ namespace TimeTrackerPro.ViewModels
             set => SetProperty(ref _hasActiveTimer, value);
         }
 
+        // ProjectDetailViewModel.cs — reemplaza ActiveTimerSectionId
         public int? ActiveTimerSectionId
         {
             get => _activeTimerSectionId;
-            set => SetProperty(ref _activeTimerSectionId, value);
+            set
+            {
+                // Desactivamos la sección anterior
+                if (_activeTimerSectionId.HasValue)
+                {
+                    var prev = FindSection(_activeTimerSectionId.Value);
+                    if (prev != null) prev.IsTimerActive = false;
+                }
+
+                SetProperty(ref _activeTimerSectionId, value);
+
+                // Activamos la nueva sección
+                if (value.HasValue)
+                {
+                    var next = FindSection(value.Value);
+                    if (next != null)
+                    {
+                        next.IsTimerActive = true;
+                        RefreshSection(next);
+                    }
+                }
+            }
         }
+
+        public ObservableCollection<Expense> Expenses
+        {
+            get => _expenses;
+            set => SetProperty(ref _expenses, value);
+        }
+
+        public bool IsAddingExpense
+        {
+            get => _isAddingExpense;
+            set => SetProperty(ref _isAddingExpense, value);
+        }
+
+        public string NewExpenseDescription
+        {
+            get => _newExpenseDescription;
+            set
+            {
+                SetProperty(ref _newExpenseDescription, value);
+                OnPropertyChanged(nameof(CanSaveExpense));
+            }
+        }
+
+        public double NewExpenseAmount
+        {
+            get => _newExpenseAmount;
+            set
+            {
+                SetProperty(ref _newExpenseAmount, value);
+                OnPropertyChanged(nameof(CanSaveExpense));
+            }
+        }
+
+        public ExpenseCategory NewExpenseCategory
+        {
+            get => _newExpenseCategory;
+            set => SetProperty(ref _newExpenseCategory, value);
+        }
+
+        public string NewExpenseReference
+        {
+            get => _newExpenseReference;
+            set => SetProperty(ref _newExpenseReference, value);
+        }
+
+        public bool CanSaveExpense =>
+            !string.IsNullOrWhiteSpace(NewExpenseDescription) && NewExpenseAmount > 0;
+
+        /// <summary>Lista de categorías disponibles para el ComboBox.</summary>
+        public IEnumerable<ExpenseCategory> ExpenseCategories =>
+            Enum.GetValues<ExpenseCategory>();
+
+        public double TotalExpenses => _expenses.Sum(e => e.Amount);
 
         // ——— Comandos ———
         public ICommand ShowAddSectionCommand { get; }
@@ -254,10 +338,15 @@ namespace TimeTrackerPro.ViewModels
         public ICommand EditSectionCommand { get; }
         public ICommand SaveSectionEditCommand { get; }
         public ICommand CancelEditSectionCommand { get; }
-        public ICommand StartTimeCommand {  get; }
+        public ICommand StartTimerCommand {  get; }
         public ICommand StopTimerCommand { get; }
         public ICommand AddManualSessionCommand { get; }
         public ICommand DeleteSessionCommand { get; }
+        public ICommand ShowAddExpenseCommand {  get; }
+        public ICommand SaveExpenseCommand { get; }
+        public ICommand CancelExpenseCommand { get; }
+        public ICommand DeleteExpenseCommand { get; }
+        public ICommand GenerateReportCommand { get; }
 
         // ——— Constructor ———
         public ProjectDetailVewModel()
@@ -276,12 +365,22 @@ namespace TimeTrackerPro.ViewModels
             EditSectionCommand = new RelayCommand<Section>(StartEditSection);
             SaveSectionEditCommand = new RelayCommand(async () => await SaveSectionEditAsync());
             CancelEditSectionCommand = new RelayCommand(() => EditingSection = null);
-            StartTimeCommand = new RelayCommand<Section>(async s => await StartTimerAsync(s));
+            StartTimerCommand = new RelayCommand<Section>(async s => await StartTimerAsync(s));
             StopTimerCommand = new RelayCommand(async () => await StopTimerAsync());
             AddManualSessionCommand = new RelayCommand<Section>(
-                async s => await AddManualSessionCommand(s));
+                async s => await AddManualSessionAsync(s));
             DeleteSessionCommand = new RelayCommand<WorkSession>(
                 async ws => await DeleteSessionAsync(ws));
+            ShowAddExpenseCommand = new RelayCommand(ShowAddExpense);
+            SaveExpenseCommand = new RelayCommand(
+                async () => await SaveExpenseAsync(),
+                () => CanSaveExpense);
+            CancelExpenseCommand = new RelayCommand(CancelExpense);
+            DeleteExpenseCommand = new RelayCommand<Expense>(
+                async e => await DeleteExpenseAsync(e));
+            GenerateReportCommand = new RelayCommand(
+                async () => await GenerateReportAsync(),
+                () => _project != null);
 
             App.Timer.TimerTick += OnTimerTick;
             App.Timer.IsRunningChanged += OnTimerRunningChanged;
@@ -308,6 +407,12 @@ namespace TimeTrackerPro.ViewModels
                     foreach (var s in project.Sections)
                         Sections.Add(s);
 
+                var expenses = await App.Expenses.GetByProyectAsync(projectId);
+                Expenses.Clear();
+                foreach (var e in expenses)
+                    Expenses.Add(e);
+
+                OnPropertyChanged(nameof(TotalExpenses));
                 RefreshCalculations();
             }
             catch(Exception ex)
@@ -515,6 +620,275 @@ namespace TimeTrackerPro.ViewModels
             Delayed       // Rojo: retraso significativo
         }
 
-        
+        private async Task StartTimerAsync (Section? section)
+        {
+            if(section == null) return;
+            try
+            {
+                await App.Timer.StartAsync(section.Id);
+                ActiveTimerSectionId = section.Id;
+                HasActiveTimer = true;
+            }
+            catch(Exception ex)
+            {
+                ErrorMessage = $"Error al iniciar el cronometro: {ex.Message}";
+            }
+        }
+
+        private async Task StopTimerAsync()
+        {
+            try
+            {
+                var session = await App.Timer.StopAsync();
+                if (session == null) return;
+
+                //Añadimos la sesion completada a la seccion correspondiente
+                var section = FindSection(session.SectionId);
+                if(section != null)
+                {
+                    section.WorkSessions.Add(session);
+                    RefreshSection(section);
+                }
+
+                ActiveTimerSectionId = null;
+                HasActiveTimer=false;
+                TimerDisplay = "00:00:00";
+                RefreshCalculations();
+            }
+            catch(Exception ex)
+            {
+                ErrorMessage = $"Error al parar el cronometro: {ex.Message}";
+            }
+        }
+
+        private async Task AddManualSessionAsync(Section? section)
+        {
+            if (section == null) return;
+
+            //Abrimos el dialogo de sesion manual
+            var dialog = new Views.ManualSessionDialog(section.Name);
+            dialog.Owner = System.Windows.Application.Current.MainWindow;
+
+            if (dialog.ShowDialog() != true) return;
+
+            try
+            {
+                var session = new WorkSession
+                {
+                    SectionId = section.Id,
+                    StartTime = dialog.StartTime,
+                    EndTime = dialog.EndTime,
+                    Notes = dialog.Notes,
+                    IsManual = true
+                };
+
+                await App.WorkSessions.InsertAsync(session);
+                section.WorkSessions.Add(session);
+                RefreshSection(section);
+                RefreshCalculations();
+            }
+            catch(Exception ex)
+            {
+                ErrorMessage = $"Error al guardar la sesion: {ex.Message}";
+            }
+        }
+
+        private async Task DeleteSessionAsync(WorkSession? session)
+        {
+            if (session == null) return;
+
+            var confirmed = Views.ConfirmDialog.Show(
+                System.Windows.Application.Current.MainWindow,
+                "Eliminar sesion",
+                $"¿Eliminar la sesion del {session.StartTime:dd/MM/yyyy HH:mm}?",
+                "Si, eliminar");
+
+            if(!confirmed) return;
+
+            try
+            {
+                await App.WorkSessions.DeleteAsync(session.Id);
+
+                var section = FindSection(session.SectionId);
+                if(section != null)
+                {
+                    section.WorkSessions.Remove(session);
+                    RefreshSection(section);
+                }
+
+                RefreshCalculations();
+            }
+            catch(Exception ex)
+            {
+                ErrorMessage = $"Error al eliminar la sesion: {ex.Message}";
+            }
+        }
+
+        private void OnTimerTick(TimeSpan elapsed)
+        {
+            TimerDisplay = elapsed.ToString(@"hh\:mm\:ss");
+        }
+
+        private void OnTimerRunningChanged(bool isRunning)
+        {
+            HasActiveTimer = isRunning;
+            if (!isRunning)
+            {
+                ActiveTimerSectionId = null;
+                TimerDisplay = "00:00:00";
+            }
+        }
+
+        private void SyncTimerState()
+        {
+            HasActiveTimer = App.Timer.IsRunning;
+            ActiveTimerSectionId = App.Timer.ActiveSectionId;
+        }
+
+        /// <summary>
+        /// Busca una sección o subsección por Id en toda la jerarquía.
+        /// </summary>
+        private Section? FindSection(int sectionId)
+        {
+            foreach (var s in _sections)
+            {
+                if (s.Id == sectionId) return s;
+                var sub = s.SubSections.FirstOrDefault(ss => ss.Id == sectionId);
+                if (sub != null) return sub;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Fuerza el refresco visual de una sección en la ObservableCollection.
+        /// </summary>
+        private void RefreshSection(Section section)
+        {
+            // Si es seccion raiz
+            var idx = Sections.IndexOf(section);
+            if(idx >= 0)
+            {
+                Sections.RemoveAt(idx);
+                Sections.Insert(idx, section);
+                return;
+            }
+
+            // Si es subseccion, refrescamos la seccion padre
+            var parent = _sections.FirstOrDefault(
+                s => s.SubSections.Contains(section) );
+            if(parent != null)
+            {
+                var pidx = Sections.IndexOf(parent);
+                if(pidx >= 0)
+                {
+                    Sections.RemoveAt(pidx);
+                    Sections.Insert(pidx, parent);
+                }
+            }
+        }
+
+        private void ShowAddExpense()
+        {
+            NewExpenseDescription = string.Empty;
+            NewExpenseAmount = 0;
+            NewExpenseCategory = ExpenseCategory.Other;
+            NewExpenseReference = string.Empty;
+            IsAddingExpense = true;
+        }
+
+        private async Task SaveExpenseAsync()
+        {
+            if (_project == null) return;
+            try
+            {
+                var expense = new Expense
+                {
+                    ProjectId = _project.Id,
+                    Description = NewExpenseDescription.Trim(),
+                    Amount = NewExpenseAmount,
+                    Category = NewExpenseCategory,
+                    Date = DateTime.Now,
+                    Reference = NewExpenseReference.Trim()
+                };
+
+                await App.Expenses.InsertAsync(expense);
+                Expenses.Insert(0, expense);
+                IsAddingExpense = false;
+                OnPropertyChanged(nameof(TotalExpenses));
+            }
+            catch(Exception ex)
+            {
+                ErrorMessage=$"Error al guardar el gasto: {ex.Message}";
+            }
+        }
+
+        private void CancelExpense()
+        {
+            IsAddingExpense = false;
+        }
+
+        private async Task DeleteExpenseAsync(Expense? expense)
+        {
+            if (expense == null) return;
+
+            var confirmed = Views.ConfirmDialog.Show(
+                System.Windows.Application.Current.MainWindow,
+                "Eliminar gasto",
+                $"¿Eliminar '{expense.Description}' ({expense.Amount:C})?",
+                "Si, eliminar");
+
+            if (!confirmed) return;
+
+            try
+            {
+                await App.Expenses.DeleteAsync(expense.Id);
+                Expenses.Remove(expense);
+                OnPropertyChanged(nameof(TotalExpenses));
+            }
+            catch(Exception ex)
+            {
+                ErrorMessage = $"Error al eliminar el gasto: {ex.Message}";
+            }
+        }
+
+        private async Task GenerateReportAsync()
+        {
+            if (_project == null) return;
+
+            try
+            {
+                // Diálogo para elegir dónde guardar el PDF
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "Guardar informe",
+                    FileName = $"Informe_{_project.Name}_{DateTime.Now:yyyyMMdd}",
+                    DefaultExt = ".pdf",
+                    Filter = "PDF|*.pdf"
+                };
+
+                if (dialog.ShowDialog() != true) return;
+
+                // Cargamos el proyecto completo con todas las relaciones
+                var fullProject = await App.Projects.GetByIdAsync(_project.Id);
+                if (fullProject == null) return;
+
+                // Cargamos los gastos (GetByIdAsync no los incluye aún)
+                var expenses = await App.Expenses.GetByProyectAsync(_project.Id);
+                fullProject.Expenses = expenses.ToList();
+
+                // Generamos el PDF en un hilo secundario para no bloquear la UI
+                await Task.Run(() => App.Reports.GenerateProjectReport(
+                    fullProject, dialog.FileName));
+
+                // Abrimos el PDF automáticamente
+                System.Diagnostics.Process.Start(
+                    new System.Diagnostics.ProcessStartInfo(dialog.FileName)
+                    { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = $"Error al generar el informe: {ex.Message}";
+            }
+        }
     }
 }
