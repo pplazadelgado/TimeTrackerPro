@@ -2,6 +2,7 @@
 using TimeTrackerPro.Infrastructure;
 using TimeTrackerPro.Repositories;
 using TimeTrackerPro.Services;
+using TimeTrackerPro.Views;
 using QuestPDF.Infrastructure;
 
 namespace TimeTrackerPro
@@ -25,31 +26,44 @@ namespace TimeTrackerPro
         protected override async void OnStartup(StartupEventArgs e)
         {
             QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
-
             base.OnStartup(e);
+
+            var splash = new SplashScreenWindow();
+            splash.Show();
 
             try
             {
+                var minimumDisplay = Task.Delay(TimeSpan.FromSeconds(2));
+
+                splash.SetStatus("Abriendo base de datos...");
                 Database = new DatabaseContext();
                 await Database.InitializeAsync();
 
+                splash.SetStatus("Cargando repositorios...");
                 Projects = new ProjectRepository(Database);
                 Sections = new SectionRepository(Database);
                 WorkSessions = new WorkSessionRepository(Database);
-                Timer = new TimerService (WorkSessions);
-                await Timer.RestoreActiveSessionAsync();
                 Expenses = new ExpenseRepository(Database);
                 Reports = new ReportService();
+
+                splash.SetStatus("Restaurando sesión activa...");
+                Timer = new TimerService(WorkSessions);
+                await Timer.RestoreActiveSessionAsync();
+
+                await minimumDisplay;
+
+                var mainWindow = new MainWindow();
+                mainWindow.Show();
+                splash.Close();
             }
             catch (Exception ex)
             {
+                splash.Close();
                 MessageBox.Show(
                     $"Error al inicializar la base de datos:\n\n{ex.Message}",
                     "Error de inicio",
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
-
-                // Si no podemos iniciar la BD, cerramos la app
                 Shutdown(1);
             }
         }

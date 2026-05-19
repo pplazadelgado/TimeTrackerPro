@@ -32,7 +32,10 @@
                            Margin="0,12,0,4"/>
                 <TextBox x:Name="StartTimeBox"
                          FontSize="13" Padding="8,6" Height="36"
-                         BorderBrush="#DEE2E6" BorderThickness="1"
+                         Background="{DynamicResource BgInputBrush}"
+                         BorderBrush="{DynamicResource BorderInputBrush}"
+                         Foreground="{DynamicResource FgPrimaryBrush}"
+                         BorderThickness="1"
                          Text="09:00"/>
 
                 <!-- Hora fin -->
@@ -41,7 +44,10 @@
                            Margin="0,12,0,4"/>
                 <TextBox x:Name="EndTimeBox"
                          FontSize="13" Padding="8,6" Height="36"
-                         BorderBrush="#DEE2E6" BorderThickness="1"
+                         Background="{DynamicResource BgInputBrush}"
+                         BorderBrush="{DynamicResource BorderInputBrush}"
+                         Foreground="{DynamicResource FgPrimaryBrush}"
+                         BorderThickness="1"
                          Text="10:00"/>
 
                 <!-- Notas -->
@@ -50,7 +56,10 @@
                            Margin="0,12,0,4"/>
                 <TextBox x:Name="NotesBox"
                          FontSize="13" Padding="8,6" Height="70"
-                         BorderBrush="#DEE2E6" BorderThickness="1"
+                         Background="{DynamicResource BgInputBrush}"
+                         BorderBrush="{DynamicResource BorderInputBrush}"
+                         Foreground="{DynamicResource FgPrimaryBrush}"
+                         BorderThickness="1"
                          TextWrapping="Wrap" AcceptsReturn="True"/>
 
                 <!-- Error -->

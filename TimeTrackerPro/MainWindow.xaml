@@ -67,10 +67,8 @@
                             <Button Content="＋ Nuevo"
                                     Command="{Binding ShowNewProjectFormCommand}"
                                     HorizontalAlignment="Right"
-                                    Background="{DynamicResource AccentBrush}"
-                                    Foreground="{DynamicResource FgOnAccentBrush}"
-                                    BorderThickness="0" Padding="12,6"
-                                    FontSize="12" Cursor="Hand"/>
+                                    Style="{StaticResource BtnAccentStyle}"
+                                    Padding="12,6" FontSize="12"/>
                         </DockPanel>
                     </Border>
 
@@ -91,23 +89,57 @@
                              SelectedItem="{Binding SelectedProject}"
                              Background="Transparent" BorderThickness="0"
                              Padding="8">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                <Setter Property="Padding" Value="0"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <ContentPresenter/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Padding="12,10" Margin="0,2"
-                                        Background="{DynamicResource BgElevBrush}"
                                         CornerRadius="10"
-                                        BorderBrush="{DynamicResource BorderColorBrush}"
                                         BorderThickness="1">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background"   Value="{DynamicResource BgElevBrush}"/>
+                                            <Setter Property="BorderBrush"  Value="{DynamicResource BorderColorBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected,
+                                                    RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                                    Value="True">
+                                                    <Setter Property="Background"  Value="{DynamicResource AccentSoftBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                                </DataTrigger>
+                                                <MultiDataTrigger>
+                                                    <MultiDataTrigger.Conditions>
+                                                        <Condition Binding="{Binding IsMouseOver,
+                                                            RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                                            Value="True"/>
+                                                        <Condition Binding="{Binding IsSelected,
+                                                            RelativeSource={RelativeSource AncestorType=ListBoxItem}}"
+                                                            Value="False"/>
+                                                    </MultiDataTrigger.Conditions>
+                                                    <Setter Property="Background" Value="{DynamicResource BgHoverBrush}"/>
+                                                </MultiDataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <DockPanel>
                                         <Button Content="🗑"
                                                 DockPanel.Dock="Right"
                                                 Command="{Binding DataContext.DeleteProjectCommand,
                                                     RelativeSource={RelativeSource AncestorType=ListBox}}"
                                                 CommandParameter="{Binding}"
-                                                Background="Transparent"
-                                                BorderThickness="0"
-                                                Foreground="{DynamicResource FgFaintBrush}"
-                                                FontSize="14" Cursor="Hand"
+                                                Style="{StaticResource BtnIconStyle}"
+                                                FontSize="14"
                                                 VerticalAlignment="Top"/>
                                         <StackPanel>
                                             <TextBlock Text="{Binding Name}"
@@ -195,18 +227,14 @@
                             <StackPanel Orientation="Horizontal" Margin="0,28,0,0">
                                 <Button Content="Guardar proyecto"
                                         Command="{Binding SaveNewProjectCommand}"
-                                        Background="{DynamicResource AccentBrush}"
-                                        Foreground="{DynamicResource FgOnAccentBrush}"
-                                        BorderThickness="0" Padding="20,10"
-                                        FontSize="14" FontWeight="Medium" Cursor="Hand"/>
+                                        Style="{StaticResource BtnAccentStyle}"
+                                        Padding="20,10"
+                                        FontSize="14" FontWeight="Medium"/>
                                 <Button Content="Cancelar"
                                         Command="{Binding CancelNewProjectCommand}"
-                                        Background="Transparent"
-                                        Foreground="{DynamicResource FgMutedBrush}"
-                                        BorderBrush="{DynamicResource BorderStrongBrush}"
-                                        BorderThickness="1"
+                                        Style="{StaticResource BtnCancelStyle}"
                                         Padding="20,10" FontSize="14"
-                                        Margin="12,0,0,0" Cursor="Hand"/>
+                                        Margin="12,0,0,0"/>
                             </StackPanel>
                         </StackPanel>
                     </ScrollViewer>

@@ -56,24 +56,17 @@
                     <Button x:Name="CancelButton"
                             Content="Cancelar"
                             Click="OnCancelClick"
-                            Background="Transparent"
-                            Foreground="{DynamicResource FgMutedBrush}"
-                            BorderBrush="{DynamicResource BorderStrongBrush}"
-                            BorderThickness="1"
+                            Style="{StaticResource BtnCancelStyle}"
                             Padding="22,11"
                             FontSize="13"
-                            FontWeight="Medium"
-                            Cursor="Hand"/>
+                            FontWeight="Medium"/>
                     <Button x:Name="ConfirmButton"
                             Click="OnConfirmClick"
-                            Background="{DynamicResource DangerBrush}"
-                            Foreground="White"
-                            BorderThickness="0"
+                            Style="{StaticResource BtnDangerStyle}"
                             Padding="22,11"
                             FontSize="13"
                             FontWeight="SemiBold"
-                            Margin="10,0,0,0"
-                            Cursor="Hand"/>
+                            Margin="10,0,0,0"/>
                 </StackPanel>
 
             </StackPanel>

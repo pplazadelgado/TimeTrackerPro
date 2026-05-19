@@ -106,4 +106,141 @@
   <!-- Scrim para diálogos modales -->
   <SolidColorBrush x:Key="ScrimBrush" Color="#1B1614" Opacity="0.55"/>
 
+  <!-- ===================== Hover tokens ===================== -->
+  <Color x:Key="AccentSoftHoverColor">#BDD9E8</Color>
+  <Color x:Key="DangerHoverColor">#9E3226</Color>
+  <Color x:Key="BgHoverColor">#E3DBC8</Color>
+
+  <SolidColorBrush x:Key="AccentSoftHoverBrush" Color="{StaticResource AccentSoftHoverColor}"/>
+  <SolidColorBrush x:Key="DangerHoverBrush"     Color="{StaticResource DangerHoverColor}"/>
+  <SolidColorBrush x:Key="BgHoverBrush"         Color="{StaticResource BgHoverColor}"/>
+
+  <!-- ===================== Button template compartido ===================== -->
+  <!-- El hover brush se pasa a través de Tag, así el template es único. -->
+  <ControlTemplate x:Key="AuroraButtonTemplate" TargetType="Button">
+    <Border x:Name="Bd"
+            Background="{TemplateBinding Background}"
+            BorderBrush="{TemplateBinding BorderBrush}"
+            BorderThickness="{TemplateBinding BorderThickness}"
+            Padding="{TemplateBinding Padding}"
+            CornerRadius="4">
+      <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                        VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+    </Border>
+    <ControlTemplate.Triggers>
+      <Trigger Property="IsMouseOver" Value="True">
+        <Setter TargetName="Bd" Property="Background"
+                Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"/>
+      </Trigger>
+      <Trigger Property="IsEnabled" Value="False">
+        <Setter TargetName="Bd" Property="Opacity" Value="0.5"/>
+      </Trigger>
+    </ControlTemplate.Triggers>
+  </ControlTemplate>
+
+  <!-- ===================== Button styles ===================== -->
+  <Style x:Key="BtnAccentStyle" TargetType="Button">
+    <Setter Property="Background"   Value="{StaticResource AccentBrush}"/>
+    <Setter Property="Foreground"   Value="{StaticResource FgOnAccentBrush}"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Cursor"       Value="Hand"/>
+    <Setter Property="Tag"          Value="{StaticResource AccentHoverBrush}"/>
+    <Setter Property="Template"     Value="{StaticResource AuroraButtonTemplate}"/>
+  </Style>
+
+  <Style x:Key="BtnAccentSoftStyle" TargetType="Button">
+    <Setter Property="Background"   Value="{StaticResource AccentSoftBrush}"/>
+    <Setter Property="Foreground"   Value="{StaticResource AccentBrush}"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Cursor"       Value="Hand"/>
+    <Setter Property="Tag"          Value="{StaticResource AccentSoftHoverBrush}"/>
+    <Setter Property="Template"     Value="{StaticResource AuroraButtonTemplate}"/>
+  </Style>
+
+  <Style x:Key="BtnDangerStyle" TargetType="Button">
+    <Setter Property="Background"   Value="{StaticResource DangerBrush}"/>
+    <Setter Property="Foreground"   Value="White"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Cursor"       Value="Hand"/>
+    <Setter Property="Tag"          Value="{StaticResource DangerHoverBrush}"/>
+    <Setter Property="Template"     Value="{StaticResource AuroraButtonTemplate}"/>
+  </Style>
+
+  <Style x:Key="BtnCancelStyle" TargetType="Button">
+    <Setter Property="Background"   Value="Transparent"/>
+    <Setter Property="Foreground"   Value="{StaticResource FgMutedBrush}"/>
+    <Setter Property="BorderBrush"  Value="{StaticResource BorderStrongBrush}"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="Cursor"       Value="Hand"/>
+    <Setter Property="Tag"          Value="{StaticResource BgHoverBrush}"/>
+    <Setter Property="Template"     Value="{StaticResource AuroraButtonTemplate}"/>
+  </Style>
+
+  <Style x:Key="BtnIconStyle" TargetType="Button">
+    <Setter Property="Background"   Value="Transparent"/>
+    <Setter Property="Foreground"   Value="{StaticResource FgFaintBrush}"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="Cursor"       Value="Hand"/>
+    <Setter Property="Tag"          Value="{StaticResource BgTileBrush}"/>
+    <Setter Property="Template"     Value="{StaticResource AuroraButtonTemplate}"/>
+  </Style>
+
+  <!-- ===================== Thin ScrollBar (10 px, sin flechas, thumb redondeado) ===================== -->
+  <Style TargetType="ScrollBar">
+    <Setter Property="OverridesDefaultStyle" Value="True"/>
+    <Setter Property="Stylus.IsFlicksEnabled" Value="False"/>
+    <Setter Property="Width"    Value="10"/>
+    <Setter Property="MinWidth" Value="10"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="ScrollBar">
+          <Grid x:Name="Root">
+            <Track x:Name="PART_Track" IsDirectionReversed="True">
+              <Track.DecreaseRepeatButton>
+                <RepeatButton OverridesDefaultStyle="True" Width="0" Height="0">
+                  <RepeatButton.Template>
+                    <ControlTemplate TargetType="RepeatButton"><Rectangle/></ControlTemplate>
+                  </RepeatButton.Template>
+                </RepeatButton>
+              </Track.DecreaseRepeatButton>
+              <Track.Thumb>
+                <Thumb OverridesDefaultStyle="True">
+                  <Thumb.Template>
+                    <ControlTemplate TargetType="Thumb">
+                      <Border Background="{DynamicResource BorderStrongBrush}"
+                              CornerRadius="5" Margin="2"/>
+                    </ControlTemplate>
+                  </Thumb.Template>
+                </Thumb>
+              </Track.Thumb>
+              <Track.IncreaseRepeatButton>
+                <RepeatButton OverridesDefaultStyle="True" Width="0" Height="0">
+                  <RepeatButton.Template>
+                    <ControlTemplate TargetType="RepeatButton"><Rectangle/></ControlTemplate>
+                  </RepeatButton.Template>
+                </RepeatButton>
+              </Track.IncreaseRepeatButton>
+            </Track>
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+              <Setter TargetName="Root"       Property="Width"              Value="Auto"/>
+              <Setter TargetName="Root"       Property="Height"             Value="10"/>
+              <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+    <Style.Triggers>
+      <Trigger Property="Orientation" Value="Horizontal">
+        <Setter Property="Width"     Value="Auto"/>
+        <Setter Property="Height"    Value="10"/>
+        <Setter Property="MinWidth"  Value="0"/>
+        <Setter Property="MinHeight" Value="10"/>
+      </Trigger>
+    </Style.Triggers>
+  </Style>
+
 </ResourceDictionary>
