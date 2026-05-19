@@ -14,9 +14,9 @@ namespace TimeTrackerPro
         // Guardamos el contexto como propiedad estática para
         // que toda la app pueda acceder. En fases posteriores
         // usaremos inyección de dependencias formal.
-        public static DatabaseContext Database { get; private set; } = null;
+        public static DatabaseContext Database { get; private set; } = null!;
         public static IProjectRepository Projects {  get; private set; } = null!;
-        public static ISectionRepository Sections { get; private set; } = null;
+        public static ISectionRepository Sections { get; private set; } = null!;
         public static IWorkSessionRepository WorkSessions {  get; private set; } = null!;
         public static TimerService Timer {  get; private set; } = null!;
         public static IExpenseRepository Expenses { get; private set; } = null!;
@@ -51,6 +51,22 @@ namespace TimeTrackerPro
 
                 // Si no podemos iniciar la BD, cerramos la app
                 Shutdown(1);
+            }
+        }
+        
+        protected override async void OnExit(ExitEventArgs e)
+        {
+            base.OnExit(e);
+            try
+            {
+                // Si hay cronometro activo al cerrar, lo paramos
+                if (Timer.IsRunning)
+                    await Timer.StopAsync();
+            }
+            catch
+            {
+                // Si algo falla al cerrar, no hacemos nada
+                // no queremos errores en el cierre de la app
             }
         }
     }

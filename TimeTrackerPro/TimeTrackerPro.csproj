@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -6,16 +6,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Assets\" />
+    <Resource Include="Assets\app-icon.ico" />
+    <Resource Include="Assets\Fonts\*.ttf" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.72" />
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="11.0.0-preview.3.26207.106" />
-    <PackageReference Include="QuestPDF" Version="2026.2.4" />
+    <PackageReference Include="QuestPDF" Version="2026.5.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
   </ItemGroup>
 

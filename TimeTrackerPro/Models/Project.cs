@@ -8,6 +8,7 @@
         public double WeeklyHours { get; set; } = 8;
         public DateTime CreatedAt { get; set; }= DateTime.Now;
         public ProjectStatus Status { get; set; } = ProjectStatus.Active;
+        public DateTime? DeadlineDate { get; set; }
 
         public List<Section> Sections { get; set; } = new();
         public List<Expense> Expenses { get; set; } = new();

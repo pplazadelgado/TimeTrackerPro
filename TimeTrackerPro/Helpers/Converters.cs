@@ -1,6 +1,8 @@
 ﻿using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
+using TimeTrackerPro.ViewModels;
 
 namespace TimeTrackerPro.Helpers
 {
@@ -107,6 +109,71 @@ namespace TimeTrackerPro.Helpers
             => value is int count && count > 0 ? Visibility.Visible : Visibility.Collapsed;
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Convierte un DeviationLevel en un color de fondo para la tarjeta de desviación.
+    /// Verde (#DCF0CD) = en plazo, Ámbar (#F6E2A6) = leve, Rojo (#F4DAD6) = retraso.
+    /// </summary>
+    public class DeviationToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var level = value is ProjectDetailVewModel.DeviationLevel dl
+                ? dl
+                : ProjectDetailVewModel.DeviationLevel.OnTrack;
+
+            var hex = level switch
+            {
+                ProjectDetailVewModel.DeviationLevel.SlightDelay => "#F6E2A6",
+                ProjectDetailVewModel.DeviationLevel.Delayed      => "#F4DAD6",
+                _                                                  => "#DCF0CD"
+            };
+
+            return new SolidColorBrush(
+                (Color)ColorConverter.ConvertFromString(hex));
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Convierte un ProjectStatus en un color de fondo para la etiqueta.
+    /// </summary>
+    public class StatusToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType,
+            object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value is not TimeTrackerPro.Models.ProjectStatus status)
+                return System.Windows.Media.Brushes.Gray;
+
+            return status switch
+            {
+                Models.ProjectStatus.Active =>
+                    new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter
+                        .ConvertFromString("#27AE60")),
+                Models.ProjectStatus.Paused =>
+                    new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter
+                        .ConvertFromString("#F39C12")),
+                Models.ProjectStatus.Completed =>
+                    new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter
+                        .ConvertFromString("#3498DB")),
+                Models.ProjectStatus.Archived =>
+                    new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter
+                        .ConvertFromString("#95A5A6")),
+                _ => System.Windows.Media.Brushes.Gray
+            };
+        }
+
+        public object ConvertBack(object value, Type targetType,
+            object parameter, System.Globalization.CultureInfo culture)
             => throw new NotImplementedException();
     }
 }

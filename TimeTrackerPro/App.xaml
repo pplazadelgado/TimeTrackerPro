@@ -1,15 +1,23 @@
-﻿<Application x:Class="TimeTrackerPro.App"
+<Application x:Class="TimeTrackerPro.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:helpers="clr-namespace:TimeTrackerPro.Helpers"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-        <!-- Converters disponibles en toda la aplicación -->
-        <helpers:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
-        <helpers:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
-        <helpers:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
-        <helpers:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter"/>
-        <helpers:NotEqualToVisibilityConverter x:Key="NotEqualToVisibilityConverter"/>
-        <helpers:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+        <ResourceDictionary>
+            <!-- Tema Aurora: colores y tipografía -->
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Assets/Theme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Converters disponibles en toda la aplicación -->
+            <helpers:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+            <helpers:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+            <helpers:PercentageToWidthConverter x:Key="PercentageToWidthConverter"/>
+            <helpers:EqualToVisibilityConverter x:Key="EqualToVisibilityConverter"/>
+            <helpers:NotEqualToVisibilityConverter x:Key="NotEqualToVisibilityConverter"/>
+            <helpers:DeviationToColorConverter x:Key="DeviationToColorConverter"/>
+            <helpers:StatusToColorConverter x:Key="StatusToColorConverter"/>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

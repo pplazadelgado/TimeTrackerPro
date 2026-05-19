@@ -23,6 +23,6 @@ namespace TimeTrackerPro.Repositories
         /// Busca si hay alguna sesión activa (sin EndTime) en toda la BD.
         /// Garantiza que no haya dos cronómetros corriendo a la vez.
         /// </summary>
-        Task<WorkSession> GetActiveSessionAsync();
+        Task<WorkSession?> GetActiveSessionAsync();
     }
 }

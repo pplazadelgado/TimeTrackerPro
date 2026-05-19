@@ -72,7 +72,7 @@ namespace TimeTrackerPro.Services
         /// Para el cronómetro y guarda el EndTime en la BD.
         /// Devuelve la sesión completada para que el ViewModel la añada a la lista.
         /// </summary>
-        public async Task<WorkSession> StopAsync()
+        public async Task<WorkSession?> StopAsync()
         {
             if (_activeSession == null) return null;
 
@@ -102,7 +102,7 @@ namespace TimeTrackerPro.Services
             IsRunningChanged?.Invoke(true);
         }
 
-        private void OnTimerTick(object sender, EventArgs e)
+        private void OnTimerTick(object? sender, EventArgs e)
         {
             if (_activeSession == null) return;
 

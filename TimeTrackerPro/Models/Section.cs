@@ -15,6 +15,7 @@
 
         public DateTime CreatedAt { get; set; } = DateTime.Now;
         public SectionStatus Status { get; set; } = SectionStatus.Pending;
+        public DateTime? DeadlineDate { get; set; }
 
         /// <summary>
         /// Indica si el cronómetro está activo en esta sección.

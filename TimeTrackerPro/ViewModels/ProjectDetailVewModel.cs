@@ -34,6 +34,9 @@ namespace TimeTrackerPro.ViewModels
         private double _newExpenseAmount;
         private ExpenseCategory _newExpenseCategory = ExpenseCategory.Other;
         private string _newExpenseReference = string.Empty;
+        private ProjectStatus _editProjectStatus;
+
+        public IEnumerable<ProjectStatus> ProjectStatuses => Enum.GetValues<ProjectStatus>();
 
         // edición proyecto
         private bool _isEditingProject;
@@ -45,6 +48,10 @@ namespace TimeTrackerPro.ViewModels
         private Section? _editingSection;
         private string _editSectionName = string.Empty;
         private double _editSectionEstimatedHours;
+        private DateTime? _editSectionDeadline;
+
+        // fechas de entrega (edición)
+        private DateTime? _editProjectDeadline;
 
         // ——— Propiedades públicas ———
 
@@ -62,7 +69,7 @@ namespace TimeTrackerPro.ViewModels
                 OnPropertyChanged(nameof(TotalWorkedHours));
                 OnPropertyChanged(nameof(ProgressPercentage));
                 OnPropertyChanged(nameof(EstimatedEndDate));
-                OnPropertyChanged(nameof(DeviationStatus));
+                OnPropertyChanged(nameof(Deviation));
                 OnPropertyChanged(nameof(HasProject));
             }
         }
@@ -96,7 +103,7 @@ namespace TimeTrackerPro.ViewModels
 
         public string NewSectionFormTitle =>
             _isAddingSubSection
-                ? $"Nueva subseccion en '{_parentSectionForNew.Name}"
+                ? $"Nueva subseccion en '{_parentSectionForNew?.Name}"
                 : "Nueva seccion";
 
         public string NewSectionName
@@ -176,6 +183,18 @@ namespace TimeTrackerPro.ViewModels
             set => SetProperty(ref _editSectionEstimatedHours, value);
         }
 
+        public DateTime? EditProjectDeadline
+        {
+            get => _editProjectDeadline;
+            set => SetProperty(ref _editProjectDeadline, value);
+        }
+
+        public DateTime? EditSectionDeadline
+        {
+            get => _editSectionDeadline;
+            set => SetProperty(ref _editSectionDeadline, value);
+        }
+
         // ——— Propiedades calculadas del proyecto ———
 
         public string ProjectName => _project?.Name ?? string.Empty;
@@ -194,8 +213,8 @@ namespace TimeTrackerPro.ViewModels
                 : 0;
 
         /// <summary>
-        /// Calcula la fecha estimada de fin basándose en:
-        /// horas restantes / horas disponibles por semana.
+        /// Fecha estimada de fin basada en horas restantes / horas semanales.
+        /// Si hay fecha de entrega, añade cuántos días de margen o retraso hay.
         /// </summary>
         public string EstimatedEndDate
         {
@@ -204,31 +223,83 @@ namespace TimeTrackerPro.ViewModels
                 if (_project == null || _project.WeeklyHours <= 0)
                     return "Sin datos";
 
-                var remainingHours = TotalEstimatedHours - TotalWorkedHours;
-                if(remainingHours < 0) return "Completado";
+                var remaining = TotalEstimatedHours - TotalWorkedHours;
+                if (remaining <= 0) return "Completado";
 
-                var weeksNeeded = remainingHours / _project.WeeklyHours;
-                var estimatedEnd = DateTime.Now.AddDays(weeksNeeded * 7);
+                var weeksNeeded = remaining / _project.WeeklyHours;
+                var estimatedEnd = DateTime.Today.AddDays(weeksNeeded * 7);
+                var dateStr = estimatedEnd.ToString("dd MMM yyyy");
 
-                return estimatedEnd.ToString("dd MMM yyyy");
+                if (_project.DeadlineDate.HasValue)
+                {
+                    var diff = (int)(estimatedEnd.Date - _project.DeadlineDate.Value.Date).TotalDays;
+                    if (diff > 0)  return $"{dateStr}  (+{diff}d)";
+                    if (diff < 0)  return $"{dateStr}  ({-diff}d margen)";
+                }
+
+                return dateStr;
             }
         }
 
         /// <summary>
-        /// Indica visualmente si vamos bien, con retraso leve o con retraso grave.
-        /// Verde: menos del 110% de lo estimado
-        /// Amarillo: entre 110% y 130%
-        /// Rojo: más del 130%
+        /// Desviación combinada: considera tanto la ratio horas trabajadas/estimadas
+        /// como el cumplimiento de la fecha de entrega si está configurada.
         /// </summary>
-        public DeviationLevel DeviationStatus
+        public DeviationInfo Deviation
         {
             get
             {
-                if (TotalEstimatedHours <= 0) return DeviationLevel.OnTrack;
-                var ratio = TotalWorkedHours / TotalEstimatedHours;
-                if (ratio <= 1.10) return DeviationLevel.OnTrack;
-                if (ratio <= 1.30) return DeviationLevel.SlightDelay;
-                return DeviationLevel.Delayed;
+                // Nivel basado en horas
+                var level = DeviationLevel.OnTrack;
+                if (TotalEstimatedHours > 0)
+                {
+                    var ratio = TotalWorkedHours / TotalEstimatedHours;
+                    if (ratio > 1.30) level = DeviationLevel.Delayed;
+                    else if (ratio > 1.10) level = DeviationLevel.SlightDelay;
+                }
+
+                var remaining = TotalEstimatedHours - TotalWorkedHours;
+                if (remaining <= 0)
+                    return new DeviationInfo { Level = level, Summary = "Completado" };
+
+                // Si hay fecha de entrega, cruzamos con la fecha estimada de fin
+                if (_project?.DeadlineDate.HasValue == true && _project.WeeklyHours > 0)
+                {
+                    var deadline = _project.DeadlineDate.Value.Date;
+                    var estimatedEnd = DateTime.Today.AddDays(
+                        remaining / _project.WeeklyHours * 7).Date;
+
+                    if (estimatedEnd > deadline)
+                    {
+                        var daysLate = (int)(estimatedEnd - deadline).TotalDays;
+                        var dlLevel = daysLate >= 14 ? DeviationLevel.Delayed : DeviationLevel.SlightDelay;
+                        if (dlLevel > level) level = dlLevel;
+                        return new DeviationInfo
+                        {
+                            Level = level,
+                            Summary = $"Fin est. {estimatedEnd:dd MMM yyyy} · {daysLate}d sobre entrega ({deadline:dd MMM})"
+                        };
+                    }
+                    else
+                    {
+                        var margin = (int)(deadline - estimatedEnd).TotalDays;
+                        return new DeviationInfo
+                        {
+                            Level = level,
+                            Summary = $"Fin est. {estimatedEnd:dd MMM yyyy} · {margin}d de margen ({deadline:dd MMM})"
+                        };
+                    }
+                }
+
+                // Sin fecha de entrega — resumen solo de horas
+                var excess = TotalWorkedHours - TotalEstimatedHours;
+                var summary = level switch
+                {
+                    DeviationLevel.OnTrack    => "En plazo",
+                    DeviationLevel.SlightDelay => $"+{excess:F1}h sobre estimación",
+                    _                          => $"+{excess:F1}h · retraso significativo"
+                };
+                return new DeviationInfo { Level = level, Summary = summary };
             }
         }
 
@@ -325,6 +396,12 @@ namespace TimeTrackerPro.ViewModels
             Enum.GetValues<ExpenseCategory>();
 
         public double TotalExpenses => _expenses.Sum(e => e.Amount);
+
+        public ProjectStatus EditProjectStatus
+        {
+            get => _editProjectStatus;
+            set => SetProperty(ref _editProjectStatus, value);
+        }
 
         // ——— Comandos ———
         public ICommand ShowAddSectionCommand { get; }
@@ -531,7 +608,7 @@ namespace TimeTrackerPro.ViewModels
             OnPropertyChanged(nameof(TotalWorkedHours));
             OnPropertyChanged(nameof(ProgressPercentage));
             OnPropertyChanged(nameof(EstimatedEndDate));
-            OnPropertyChanged(nameof(DeviationStatus));
+            OnPropertyChanged(nameof(Deviation));
         }
 
         private void StartEditProject()
@@ -540,6 +617,8 @@ namespace TimeTrackerPro.ViewModels
             EditProjectName = _project.Name;
             EditProjectDescription = _project.Description ?? string.Empty;
             EditProjectWeeklyHours = _project.WeeklyHours;
+            EditProjectStatus = _project.Status;
+            EditProjectDeadline = _project.DeadlineDate;
             IsEditingProject = true;
         }
 
@@ -551,10 +630,14 @@ namespace TimeTrackerPro.ViewModels
                 _project.Name = EditProjectName.Trim();
                 _project.Description = EditProjectDescription.Trim();
                 _project.WeeklyHours = (int)EditProjectWeeklyHours;
+                _project.Status = EditProjectStatus;
+                _project.DeadlineDate = EditProjectDeadline;
                 await App.Projects.UpdateAsync(_project);
                 IsEditingProject = false;
                 OnPropertyChanged(nameof(ProjectName));
                 OnPropertyChanged(nameof(EstimatedEndDate));
+                OnPropertyChanged(nameof(Deviation));
+                OnPropertyChanged(nameof(Project));
             }
             catch (Exception ex)
             {
@@ -567,6 +650,7 @@ namespace TimeTrackerPro.ViewModels
             if (section == null) return;
             EditSectionName = section.Name;
             EditSectionEstimatedHours = section.EstimatedHours;
+            EditSectionDeadline = section.DeadlineDate;
             EditingSection = section;
         }
 
@@ -577,6 +661,7 @@ namespace TimeTrackerPro.ViewModels
             {
                 _editingSection.Name = EditSectionName.Trim();
                 _editingSection.EstimatedHours = EditSectionEstimatedHours;
+                _editingSection.DeadlineDate = EditSectionDeadline;
                 await App.Sections.UpdateAsync(_editingSection);
 
                 // Forzar refresco del item en la lista
@@ -618,6 +703,16 @@ namespace TimeTrackerPro.ViewModels
             OnTrack,      // Verde: en plazo
             SlightDelay,  // Amarillo: leve retraso
             Delayed       // Rojo: retraso significativo
+        }
+
+        /// <summary>
+        /// Resultado completo del cálculo de desviación: nivel semáforo + texto explicativo.
+        /// Tiene en cuenta tanto las horas como la fecha de entrega si está configurada.
+        /// </summary>
+        public sealed class DeviationInfo
+        {
+            public DeviationLevel Level { get; init; }
+            public string Summary { get; init; } = string.Empty;
         }
 
         private async Task StartTimerAsync (Section? section)

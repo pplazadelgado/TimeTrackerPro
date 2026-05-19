@@ -43,7 +43,7 @@ namespace TimeTrackerPro.Repositories
         /// Hacemos tres consultas separadas y las ensamblamos en memoria.
         /// Esto es más sencillo y legible que un JOIN complejo.
         /// </summary>
-        public async Task<Project> GetByIdAsync(int id)
+        public async Task<Project?> GetByIdAsync(int id)
         {
             using var connection = _db.GetConnection();
 
@@ -108,8 +108,8 @@ namespace TimeTrackerPro.Repositories
 
             //last_insert_rowid() es la funcion SQLite para obtener elide generado
             var sql = @"
-                INSERT INTO Projects (Name, Description, WeeklyHours, CreatedAt, Status)
-                VALUES (@Name, @Description,@WeeklyHours,@CreatedAt,@Status);
+                INSERT INTO Projects (Name, Description, WeeklyHours, CreatedAt, Status, DeadlineDate)
+                VALUES (@Name, @Description, @WeeklyHours, @CreatedAt, @Status, @DeadlineDate);
                 SELECT last_insert_rowid();";
 
             var newId = await connection.ExecuteScalarAsync<int>(sql, new
@@ -118,7 +118,8 @@ namespace TimeTrackerPro.Repositories
                 project.Description,
                 project.WeeklyHours,
                 CreatedAt = project.CreatedAt.ToString("o"),
-                Status = project.Status.ToString()
+                Status = project.Status.ToString(),
+                DeadlineDate = project.DeadlineDate?.ToString("o")
             });     
             
             project.Id = newId;
@@ -134,16 +135,18 @@ namespace TimeTrackerPro.Repositories
 
             await connection.ExecuteAsync(@"
             UPDATE Projects
-            SET Name = @Name,
-                Description = @Description,
-                WeeklyHours = @WeeklyHours,
-                Status = @Status
+            SET Name         = @Name,
+                Description  = @Description,
+                WeeklyHours  = @WeeklyHours,
+                Status       = @Status,
+                DeadlineDate = @DeadlineDate
             WHERE Id = @Id", new
             {
                 project.Name,
                 project.Description,
                 project.WeeklyHours,
                 Status = project.Status.ToString(),
+                DeadlineDate = project.DeadlineDate?.ToString("o"),
                 project.Id
             });  
         }

@@ -108,6 +108,17 @@ namespace TimeTrackerPro.Infrastructure
                     FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE
                 );
             ");
+
+            // Migraciones incrementales usando PRAGMA user_version como número de esquema.
+            // Añadir un bloque "if (version < N)" por cada migración futura.
+            var version = await connection.ExecuteScalarAsync<int>("PRAGMA user_version;");
+
+            if (version < 1)
+            {
+                await connection.ExecuteAsync("ALTER TABLE Projects ADD COLUMN DeadlineDate TEXT;");
+                await connection.ExecuteAsync("ALTER TABLE Sections ADD COLUMN DeadlineDate TEXT;");
+                await connection.ExecuteAsync("PRAGMA user_version = 1;");
+            }
         }
     }
 }
