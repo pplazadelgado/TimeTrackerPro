@@ -31,6 +31,19 @@
                            Foreground="{DynamicResource FgOnDarkBrush}"
                            FontSize="18" FontWeight="SemiBold"
                            VerticalAlignment="Center"/>
+                <!-- Toggle claro/oscuro -->
+                <Button x:Name="ThemeToggleBtn"
+                        DockPanel.Dock="Right"
+                        Content="🌙"
+                        Click="OnThemeToggle"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Cursor="Hand"
+                        FontSize="16"
+                        Padding="6,0"
+                        Foreground="{DynamicResource FgOnDarkBrush}"
+                        VerticalAlignment="Center"
+                        ToolTip="Cambiar tema"/>
                 <!-- Indicador de carga -->
                 <TextBlock Text="Cargando..."
                            Foreground="{DynamicResource FgOnDarkMutedBrush}"

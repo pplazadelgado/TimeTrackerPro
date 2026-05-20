@@ -28,6 +28,9 @@ namespace TimeTrackerPro
             QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
             base.OnStartup(e);
 
+            // Aplica el tema guardado antes de que aparezca cualquier ventana.
+            Helpers.ThemeManager.Instance.LoadAndApply();
+
             var splash = new SplashScreenWindow();
             splash.Show();
 
