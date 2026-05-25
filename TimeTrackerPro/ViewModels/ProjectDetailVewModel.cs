@@ -53,6 +53,9 @@ namespace TimeTrackerPro.ViewModels
         // fechas de entrega (edición)
         private DateTime? _editProjectDeadline;
 
+
+        private readonly ObservableCollection<Project> _allProjects = new();
+
         // ——— Propiedades públicas ———
 
         public Project? Project
@@ -211,6 +214,7 @@ namespace TimeTrackerPro.ViewModels
             TotalEstimatedHours > 0
                 ? Math.Min(100, (TotalWorkedHours / TotalEstimatedHours)*100)
                 : 0;
+
 
         /// <summary>
         /// Fecha estimada de fin basada en horas restantes / horas semanales.
@@ -985,5 +989,6 @@ namespace TimeTrackerPro.ViewModels
                 ErrorMessage = $"Error al generar el informe: {ex.Message}";
             }
         }
+
     }
 }

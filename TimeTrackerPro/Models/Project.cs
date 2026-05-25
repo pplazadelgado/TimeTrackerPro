@@ -1,4 +1,6 @@
-﻿namespace TimeTrackerPro.Models
+﻿using TimeTrackerPro.Helpers;
+
+namespace TimeTrackerPro.Models
 {
     public class Project
     {
@@ -23,8 +25,34 @@
             Expenses.Sum(e => e.Amount);
 
         public override string ToString() => Name;
-        
+
+        /// <summary>
+        /// Calcula el riesgo de deadline basándose en las horas restantes
+        /// y las horas disponibles por semana.
+        /// </summary>
+        public DeviationLevel DeadlineRisk
+        {
+            get
+            {
+                if (DeadlineDate == null) return DeviationLevel.OnTrack;
+
+                var daysLeft = (DeadlineDate.Value - DateTime.Now).TotalDays;
+                var remaining = TotalEstimatedHours - TotalWorkedHours;
+                var daysNeeded = WeeklyHours > 0
+                    ? (remaining / WeeklyHours) * 7
+                    : double.MaxValue;
+
+                var deviation = daysNeeded - daysLeft;
+
+                if (deviation <= 0) return DeviationLevel.OnTrack;
+                if (deviation <= 7) return DeviationLevel.SlightDelay;
+                return DeviationLevel.Delayed;
+            }
+        }
+
     }
+
+
 
     public enum ProjectStatus
     {

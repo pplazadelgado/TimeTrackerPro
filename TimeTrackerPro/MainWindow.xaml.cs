@@ -8,13 +8,14 @@ namespace TimeTrackerPro
         public MainWindow()
         {
             InitializeComponent();
-            ThemeToggleBtn.Content = ThemeManager.Instance.ToggleIcon;
+            ThemeManager.Instance.LoadAndApply();
+            ThemeToggleButton.Content = ThemeManager.Instance.ToggleIcon;
         }
 
-        private void OnThemeToggle(object sender, RoutedEventArgs e)
+        private void ThemeToggleButton_Click(object sender, RoutedEventArgs e)
         {
             ThemeManager.Instance.Toggle();
-            ThemeToggleBtn.Content = ThemeManager.Instance.ToggleIcon;
+            ThemeToggleButton.Content = ThemeManager.Instance.ToggleIcon;
         }
     }
 }

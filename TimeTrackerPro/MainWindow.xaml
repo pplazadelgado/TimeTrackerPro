@@ -6,8 +6,8 @@
         xmlns:views="clr-namespace:TimeTrackerPro.Views"
         Title="TimeTracker Pro"
         Icon="Assets/app-icon.ico"
-        Height="700" Width="1100"
-        MinHeight="600" MinWidth="900"
+        Height="720" Width="1280"
+        MinHeight="720" MinWidth="1280"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource BgBrush}"
         FontFamily="{DynamicResource UIFontFamily}"
@@ -25,32 +25,24 @@
         </Grid.RowDefinitions>
 
         <!-- ===== CABECERA ===== -->
-        <Border Grid.Row="0" Background="{DynamicResource HeaderBrush}" Padding="24,0">
+        <Border Background="{DynamicResource HeaderBrush}" Padding="16,0">
             <DockPanel>
-                <TextBlock Text="⏱ TimeTracker Pro"
-                           Foreground="{DynamicResource FgOnDarkBrush}"
-                           FontSize="18" FontWeight="SemiBold"
-                           VerticalAlignment="Center"/>
-                <!-- Toggle claro/oscuro -->
-                <Button x:Name="ThemeToggleBtn"
+                <Button x:Name="ThemeToggleButton"
                         DockPanel.Dock="Right"
                         Content="🌙"
-                        Click="OnThemeToggle"
+                        Click="ThemeToggleButton_Click"
+                        ToolTip="Cambiar entre modo claro y oscuro"
                         Background="Transparent"
-                        BorderThickness="0"
-                        Cursor="Hand"
-                        FontSize="16"
-                        Padding="6,0"
                         Foreground="{DynamicResource FgOnDarkBrush}"
-                        VerticalAlignment="Center"
-                        ToolTip="Cambiar tema"/>
-                <!-- Indicador de carga -->
-                <TextBlock Text="Cargando..."
-                           Foreground="{DynamicResource FgOnDarkMutedBrush}"
-                           FontSize="13"
-                           VerticalAlignment="Center" Margin="16,0,0,0"
-                           Visibility="{Binding IsLoading,
-                               Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        BorderThickness="0"
+                        Padding="10,4"
+                        FontSize="16"
+                        Cursor="Hand"
+                        VerticalAlignment="Center"/>
+                <TextBlock Text="⏱ TimeTracker Pro"
+                           Foreground="{DynamicResource FgOnDarkBrush}"
+                           FontSize="16" FontWeight="SemiBold"
+                           VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
 
@@ -72,17 +64,90 @@
                     <Border DockPanel.Dock="Top" Padding="16,12"
                             BorderBrush="{DynamicResource BorderColorBrush}"
                             BorderThickness="0,0,0,1">
-                        <DockPanel>
-                            <TextBlock Text="Proyectos" FontSize="15"
-                                       FontWeight="SemiBold"
-                                       Foreground="{DynamicResource FgHeadingBrush}"
-                                       VerticalAlignment="Center"/>
-                            <Button Content="＋ Nuevo"
-                                    Command="{Binding ShowNewProjectFormCommand}"
-                                    HorizontalAlignment="Right"
-                                    Style="{StaticResource BtnAccentStyle}"
-                                    Padding="12,6" FontSize="12"/>
-                        </DockPanel>
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,8">
+                                <TextBlock Text="Proyectos" FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource FgHeadingBrush}"
+                                           VerticalAlignment="Center"/>
+                                <Button Content="＋ Nuevo"
+                                        Command="{Binding ShowNewProjectFormCommand}"
+                                        HorizontalAlignment="Right"
+                                        Style="{StaticResource BtnAccentStyle}"
+                                        Padding="12,6" FontSize="12"/>
+                            </DockPanel>
+
+                            <!-- Búsqueda -->
+                            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     FontSize="12" Padding="8,6" Height="32"
+                                     BorderBrush="{DynamicResource BorderInputBrush}"
+                                     Foreground="{DynamicResource FgPrimaryBrush}"
+                                     BorderThickness="1">
+                                <TextBox.Style>
+                                    <Style TargetType="TextBox">
+                                        <Setter Property="Background" Value="{DynamicResource BgInputBrush}"/>
+                                        <Style.Resources>
+                                            <VisualBrush x:Key="HintBrush" TileMode="None"
+                                                         Opacity="0.4" Stretch="None"
+                                                         AlignmentX="Left">
+                                                <VisualBrush.Visual>
+                                                    <TextBlock Text="🔍 Buscar..."
+                                                               FontSize="12" Margin="8,0"/>
+                                                </VisualBrush.Visual>
+                                            </VisualBrush>
+                                        </Style.Resources>
+                                        <Style.Triggers>
+                                            <Trigger Property="Text" Value="">
+                                                <Setter Property="Background"
+                                                        Value="{StaticResource HintBrush}"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBox.Style>
+                            </TextBox>
+
+                            <!-- Filtro y ordenación -->
+                            <Grid Margin="0,6,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="6"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <ComboBox Grid.Column="0"
+                                          ItemsSource="{Binding StatusFilters}"
+                                          SelectedItem="{Binding StatusFilter}"
+                                          Background="{DynamicResource BgInputBrush}"
+                                          BorderBrush="{DynamicResource BorderInputBrush}"
+                                          Foreground="{DynamicResource FgPrimaryBrush}"
+                                          FontSize="11" Height="28">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock FontSize="11">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="{Binding}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                                                <Setter Property="Text" Value="Todos los estados"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <ComboBox Grid.Column="2"
+                                          ItemsSource="{Binding SortOptions}"
+                                          SelectedItem="{Binding SortOption}"
+                                          Background="{DynamicResource BgInputBrush}"
+                                          BorderBrush="{DynamicResource BorderInputBrush}"
+                                          Foreground="{DynamicResource FgPrimaryBrush}"
+                                          FontSize="11" Height="28"/>
+                            </Grid>
+                        </StackPanel>
                     </Border>
 
                     <!-- Mensaje de error -->
@@ -155,15 +220,44 @@
                                                 FontSize="14"
                                                 VerticalAlignment="Top"/>
                                         <StackPanel>
+                                            <!-- Nombre -->
                                             <TextBlock Text="{Binding Name}"
-                                                       FontWeight="SemiBold"
-                                                       FontSize="14"
-                                                       Foreground="{DynamicResource FgPrimaryBrush}"/>
-                                            <TextBlock Text="{Binding WeeklyHours,
-                                                           StringFormat='{}{0}h/semana'}"
-                                                       FontSize="11"
-                                                       Foreground="{DynamicResource FgMutedBrush}"
-                                                       Margin="0,2,0,0"/>
+               FontWeight="SemiBold" FontSize="14"
+               Foreground="{DynamicResource FgPrimaryBrush}"/>
+
+                                            <!-- Horas por semana y estado -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <TextBlock Text="{Binding WeeklyHours,
+                       StringFormat='{}{0}h/semana'}"
+                   FontSize="11"
+                   Foreground="{DynamicResource FgMutedBrush}"/>
+                                                <TextBlock Text=" · " FontSize="11"
+                   Foreground="{DynamicResource FgMutedBrush}"/>
+                                                <TextBlock Text="{Binding Status}"
+                   FontSize="11"
+                   Foreground="{DynamicResource FgMutedBrush}"/>
+                                            </StackPanel>
+
+                                            <!-- Badge de deadline (solo si tiene fecha) -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0"
+                Visibility="{Binding DeadlineDate,
+                    Converter={StaticResource NullToVisibilityConverter}}">
+                                                <Border CornerRadius="4" Padding="6,2">
+                                                    <Border.Background>
+                                                        <Binding Path="DeadlineRisk"
+                         Converter="{StaticResource DeviationToColorConverter}"/>
+                                                    </Border.Background>
+                                                    <TextBlock FontSize="10" FontWeight="SemiBold">
+                                                        <TextBlock.Foreground>
+                                                            <Binding Path="DeadlineRisk"
+                             Converter="{StaticResource DeviationToTextColorConverter}"/>
+                                                        </TextBlock.Foreground>
+                <Run Text="📅 "/>
+                <Run Text="{Binding DeadlineDate,
+                         Mode=OneWay, StringFormat='{}{0:dd MMM yyyy}'}"/>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
                                         </StackPanel>
                                     </DockPanel>
                                 </Border>

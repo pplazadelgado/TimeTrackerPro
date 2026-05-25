@@ -18,6 +18,11 @@
             <helpers:NotEqualToVisibilityConverter x:Key="NotEqualToVisibilityConverter"/>
             <helpers:DeviationToColorConverter x:Key="DeviationToColorConverter"/>
             <helpers:StatusToColorConverter x:Key="StatusToColorConverter"/>
+            <helpers:CountToVisibilityConverter x:Key="CountToVisibilityConverter"/>
+            <helpers:BindingProxy x:Key="Proxy" Data="{Binding}"/>
+            <helpers:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            <helpers:DeviationToTextColorConverter x:Key="DeviationToTextColorConverter"/>
+            <helpers:HoursToTimeStringConverter x:Key="HoursToTimeStringConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

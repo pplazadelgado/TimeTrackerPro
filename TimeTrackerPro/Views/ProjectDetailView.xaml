@@ -141,7 +141,7 @@
                                    FontSize="11"
                                    Foreground="{DynamicResource FgFaintBrush}"/>
                         <TextBlock Text="{Binding TotalEstimatedHours,
-                                       StringFormat='{}{0:F1}h'}"
+                                       Converter={StaticResource HoursToTimeStringConverter}}"
                                    FontSize="24" FontWeight="Medium"
                                    Foreground="{DynamicResource FgPrimaryBrush}"
                                    Margin="0,4,0,0"/>
@@ -156,7 +156,7 @@
                                    FontSize="11"
                                    Foreground="{DynamicResource FgFaintBrush}"/>
                         <TextBlock Text="{Binding TotalWorkedHours,
-                                       StringFormat='{}{0:F1}h'}"
+                                       Converter={StaticResource HoursToTimeStringConverter}}"
                                    FontSize="24" FontWeight="Medium"
                                    Foreground="{DynamicResource AccentBrush}"
                                    Margin="0,4,0,0"/>
@@ -399,10 +399,12 @@
                                                        Foreground="{DynamicResource FgMutedBrush}">
                                                 <Run Text="Sección: "/>
                                                 <Run Text="{Binding TotalWorkedHours, Mode=OneWay,
-                                                         StringFormat='{}{0:F1}h trabajadas'}"/>
+                                                         Converter={StaticResource HoursToTimeStringConverter}}"/>
+                                                <Run Text=" trabajadas"/>
                                                 <Run Text=" / "/>
                                                 <Run Text="{Binding EstimatedHours, Mode=OneWay,
-                                                         StringFormat='{}{0}h estimadas'}"/>
+                                                         Converter={StaticResource HoursToTimeStringConverter}}"/>
+                                                <Run Text=" estimadas"/>
                                             </TextBlock>
                                         </DockPanel>
                                         <Border Background="{DynamicResource BorderSoftBrush}" CornerRadius="3" Height="4"
@@ -462,7 +464,7 @@
                                                                                Foreground="{DynamicResource AccentBrush}"
                                                                                Margin="0,2,0,0">
                                                                         <Run Text="{Binding DurationHours,
-                                                                                 StringFormat='{}{0:F2}h',
+                                                                                 Converter={StaticResource HoursToTimeStringConverter},
                                                                                  Mode=OneWay}"/>
                                                                         <Run Text=" "/>
                                                                         <!-- Indicador de sesión manual -->
@@ -625,10 +627,12 @@
                                                                        Foreground="{DynamicResource FgFaintBrush}"
                                                                        Margin="0,2,0,0">
                                                                 <Run Text="{Binding TotalWorkedHours, Mode=OneWay,
-                                                                         StringFormat='{}{0:F1}h trabajadas'}"/>
+                                                                         Converter={StaticResource HoursToTimeStringConverter}}"/>
+                                                                <Run Text=" trabajadas"/>
                                                                 <Run Text=" / "/>
                                                                 <Run Text="{Binding EstimatedHours, Mode=OneWay,
-                                                                         StringFormat='{}{0}h estimadas'}"/>
+                                                                         Converter={StaticResource HoursToTimeStringConverter}}"/>
+                                                                <Run Text=" estimadas"/>
                                                             </TextBlock>
                                                             <Border Background="{DynamicResource BorderSoftBrush}" CornerRadius="3"
                                                                     Height="3" Margin="0,4,0,0"
@@ -684,7 +688,7 @@
                                                                                                    Foreground="{DynamicResource AccentBrush}"
                                                                                                    Margin="0,1,0,0">
                                                                                             <Run Text="{Binding DurationHours,
-                                                                                                     StringFormat='{}{0:F2}h',
+                                                                                                     Converter={StaticResource HoursToTimeStringConverter},
                                                                                                      Mode=OneWay}"/>
                                                                                             <Run Text=" "/>
                                                                                             <Run Text="(manual)"

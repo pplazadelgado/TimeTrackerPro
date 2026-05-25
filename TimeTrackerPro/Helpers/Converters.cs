@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Runtime.Versioning;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
@@ -174,6 +175,72 @@ namespace TimeTrackerPro.Helpers
 
         public object ConvertBack(object value, Type targetType,
             object parameter, System.Globalization.CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>Collapsed si el valor es null, Visible si tiene valor.</summary>
+    public class NullToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            => value != null ? Visibility.Visible:Visibility.Collapsed;
+
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+            => throw new NotImplementedException();
+
+    }
+
+    // <summary>
+    /// Devuelve el color de texto apropiado según el nivel de desviación.
+    /// </summary>
+    public class DeviationToTextColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType,
+            object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value is not TimeTrackerPro.Models.DeviationLevel level)
+                return System.Windows.Media.Brushes.Gray;
+
+            return level switch
+            {
+                Models.DeviationLevel.OnTrack =>
+                    new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter
+                        .ConvertFromString("#2D5A1B")),
+                Models.DeviationLevel.SlightDelay =>
+                    new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter
+                        .ConvertFromString("#7A4F00")),
+                Models.DeviationLevel.Delayed =>
+                    new System.Windows.Media.SolidColorBrush(
+                        (System.Windows.Media.Color)System.Windows.Media.ColorConverter
+                        .ConvertFromString("#7A1F1F")),
+                _ => System.Windows.Media.Brushes.Gray
+            };
+        }
+
+        public object ConvertBack(object value, Type targetType,
+            object parameter, System.Globalization.CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Convierte un double de horas al formato HH:mm.
+    /// Ejemplo: 1.5 → "01:30", 13.9 → "13:54", 0.25 → "00:15"
+    /// </summary>
+    public class HoursToTimeStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType,
+            object parameter, CultureInfo culture)
+        {
+            if (value is not double hours) return "00:00";
+            var totalMinutes = (int)Math.Round(hours * 60);
+            var h = totalMinutes / 60;
+            var m = totalMinutes % 60;
+            return $"{h:D2}:{m:D2}";
+        }
+
+        public object ConvertBack(object value, Type targetType,
+            object parameter, CultureInfo culture)
             => throw new NotImplementedException();
     }
 }

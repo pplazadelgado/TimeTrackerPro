@@ -24,6 +24,9 @@ namespace TimeTrackerPro.ViewModels
         private bool _isFormVisible;
         private bool _isLoading;
         private string _errorMessge = string.Empty;
+        private string _searchText = string.Empty;
+        private string _sortOption = "Fecha";
+        private ProjectStatus? _statusFilter = null;
 
         //Campos del formulario ne nuevo proyecto
         private string _newProjectName = string.Empty;
@@ -42,6 +45,7 @@ namespace TimeTrackerPro.ViewModels
             get => _projects;
             set => SetProperty(ref _projects, value);
         }
+        private readonly ObservableCollection<Project> _allProjects = new();
 
         /// <summary>Proyecto seleccionado en la lista.</summary>
         public Project? SelectedProject
@@ -111,6 +115,39 @@ namespace TimeTrackerPro.ViewModels
             set => SetProperty(ref _newProjectWeeklyHours, value);
         }
 
+        // Propiedad de búsqueda — filtra al escribir
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                SetProperty(ref _searchText, value);
+                ApplyFilters();
+            }
+        }
+
+        // Filtro por estado
+        public ProjectStatus? StatusFilter
+        {
+            get => _statusFilter;
+            set
+            {
+                SetProperty(ref _statusFilter, value);
+                ApplyFilters();
+            }
+        }
+
+        // Opción de ordenación
+        public string SortOption
+        {
+            get => _sortOption;
+            set
+            {
+                SetProperty(ref _sortOption, value);
+                ApplyFilters();
+            }
+        }
+
         /// <summary>
         /// El botón Guardar solo se activa si el nombre no está vacío.
         /// RelayCommand llama a esto para habilitar/deshabilitar el botón.
@@ -124,6 +161,15 @@ namespace TimeTrackerPro.ViewModels
         public ICommand SaveNewProjectCommand { get; }
         public ICommand CancelNewProjectCommand { get; }
         public ICommand DeleteProjectCommand {  get; }
+
+        // Opciones disponibles para ordenar
+        public IEnumerable<string> SortOptions { get; } =
+            new[] { "Fecha", "Nombre", "Estado" };
+
+        // Estados disponibles para filtrar (null = todos)
+        public IEnumerable<ProjectStatus?> StatusFilters { get; } =
+            new ProjectStatus?[] { null }
+            .Concat(Enum.GetValues<ProjectStatus>().Cast<ProjectStatus?>());
 
         // ——— Constructor ———
         public ProjectListViewModel()
@@ -151,11 +197,13 @@ namespace TimeTrackerPro.ViewModels
 
                 var projects = await App.Projects.GetAllAsync();
 
-                Projects.Clear();
+                _allProjects.Clear();
                 foreach (var p in projects)
-                    Projects.Add(p);
+                    _allProjects.Add(p);
+
+                ApplyFilters();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 ErrorMessage = $"Error al cargar proyectos: {ex.Message}";
                 OnPropertyChanged(nameof(HasError));
@@ -195,7 +243,9 @@ namespace TimeTrackerPro.ViewModels
                 await App.Projects.InsertAsync(project);
 
                 //Añadimos directamente a la coleccion en vez de cargar toda la lista
-                Projects.Insert(0, project);
+                _allProjects.Insert(0, project);
+                ApplyFilters();
+                IsFormVisible = false;
 
                 IsFormVisible = false;
             }
@@ -230,7 +280,8 @@ namespace TimeTrackerPro.ViewModels
             try
             {
                 await App.Projects.DeleteAsync(project.Id);
-                Projects.Remove(project);
+                _allProjects.Remove(project);
+                ApplyFilters();
 
                 if (SelectedProject?.Id == project.Id)
                     SelectedProject = null;
@@ -240,6 +291,41 @@ namespace TimeTrackerPro.ViewModels
                 ErrorMessage = $"Error al eliminar: {ex.Message}";
                 OnPropertyChanged(nameof(HasError));
             }
+        }
+
+        // ProjectListViewModel.cs — añade al final de la clase
+
+        /// <summary>
+        /// Aplica búsqueda, filtro por estado y ordenación sobre
+        /// _allProjects y actualiza Projects con el resultado.
+        /// _allProjects nunca se modifica, es la fuente de verdad.
+        /// </summary>
+        private void ApplyFilters()
+        {
+            var filtered = _allProjects.AsEnumerable();
+
+            // Filtro por texto
+            if (!string.IsNullOrWhiteSpace(SearchText))
+                filtered = filtered.Where(p =>
+                    p.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    p.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+            // Filtro por estado
+            if (StatusFilter.HasValue)
+                filtered = filtered.Where(p => p.Status == StatusFilter.Value);
+
+            // Ordenación
+            filtered = SortOption switch
+            {
+                "Nombre" => filtered.OrderBy(p => p.Name),
+                "Estado" => filtered.OrderBy(p => p.Status),
+                _ => filtered.OrderByDescending(p => p.CreatedAt)
+            };
+
+            // Actualizamos la colección visible
+            Projects.Clear();
+            foreach (var p in filtered)
+                Projects.Add(p);
         }
     }
 }
